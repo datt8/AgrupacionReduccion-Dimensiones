@@ -1,4 +1,5 @@
-read.csv2("ACPTIUSD.csv",header=TRUE, sep=";", dec=".")->data_original
+
+read.csv2("Datos/ACPTIUSD.csv",header=TRUE, sep=";", dec=".")->data_original
 library(factoextra)
 library(FactoMineR)
 #Cargamos librerías y el dataset con el que trabajamos
