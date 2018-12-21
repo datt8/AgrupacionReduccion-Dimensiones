@@ -170,3 +170,18 @@ ch.clusters.kmeans <- tt.clus.kmeans %>%
                    velocidad = mean(velocida),
                    elementos = n())
 
+# Fase 5. Reparto del cluster 3
+
+# Como se tienen que repartir 74 coches se va a volver a realizar otro k-means va el reparto
+cluster3 <- tt.clus.kmeans[(tt.clus.kmeans$cluster == 3),]
+
+cluster3.scale <- data.frame(scale(cluster3)) # Se escala el data frame creado
+cluster3.scale <- cluster3.scale[,-11] # se quita la variable cluster
+
+cluster3.kmeans <- kmeans(x = cluster3.scale, centers = 5)
+fviz_cluster(object = list(data = cluster3.scale, cluster = cluster3.kmeans$cluster), 
+             geom = "text", main = "K-Means (cluster 3)", xlab = "", ylab = "", 
+             ellipse = TRUE, labelsize = 8)
+
+tt.cluster3.kmeans <- cluster3[,-11] # Se crea otro data frame quitando la columna 11 (cluster)
+tt.cluster3.kmeans$cluster <- cluster3.kmeans$cluster # Se mete la columna cluster (otra vez) con el nuevo k-means
