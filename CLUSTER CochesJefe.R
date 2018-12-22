@@ -1,10 +1,17 @@
 
-# Primera fase
+
+# Fase 1
 
 ## Lectura de los datos del archivo
 
 library(foreign)
 data.original <- data.frame(read.spss("Datos/tterreno.sav"))
+
+# Para el posterior reparto (como resumen) se saca a formato .csv los coches. Luego se colocarán los garajes
+data.original[, 1:2] -> resumen 
+resumen$coche <- paste(resumen$marca, "-", resumen$modelo)
+
+write.csv(resumen, "resumen.csv")
 
 ## Estructura de los datos
 summary(data.original) # Se observa que existen varias variables que tienen valores ausentes (NA)
@@ -52,7 +59,7 @@ cons90_marca <- data.original %>%
 
 data.def$cons90.2 <- ifelse(test = (data.original$marca == "NISSAN" & is.na(data.original$cons90)), yes = 8.4, no = data.original$cons90) # Se sustituye por la media de la marca
 data.def$cons90.3 <- ifelse(test = (data.original$marca == "SSANGYONG" & is.na(data.original$cons90)), yes = 8.17, no = data.def$cons90.2) # Se sustituye por la media de la marca
-data.def$cons90.4 <- ifelse(test = (data.original$marca == "UAZ" & is.na(data.original$cons90)), yes = 8, no = data.def$cons90.3) # Se observan el SSANGYONG Family RV (muy similar a los UAZ) y se determina poner 8 litros
+data.def$cons90.4 <- ifelse(test = (data.original$marca == "UAZ" & is.na(data.original$cons90)), yes = 8, no = data.def$cons90.3) # Se observa el SSANGYONG Family RV (muy similar a los UAZ) y se determina poner 8 litros
 
 data.def$cons90 <- round(data.def$cons90.4, 1)
 data.def[, 11:13] <- NULL
@@ -96,12 +103,14 @@ plot.j <- fviz_nbclust(data.scale, hcut, method = "wss") +
   geom_vline(xintercept = 3, linetype = 3) +
   ggtitle("Número óptimo de clusters - jerárquico") +
   labs(x = "Número k de clusters", y = "Suma total de cuadrados intra grupos") # Gráfica para determinar el número óptimo de clusters (3)
+plot.j
 
 plot.k <- fviz_nbclust(data.scale, kmeans, method = "wss") +
   geom_vline(xintercept = 2, linetype = 2) +
   geom_vline(xintercept = 3, linetype = 3) +
   ggtitle("Número óptimo de clusters - k medias") +
   labs(x = "Número k de clusters", y = "Suma total de cuadrados intra grupos") # Gráfica para determinar el número óptimo de clusters (3)
+plot.k
 
 ## Clusters óptimos NbClust
 
@@ -134,7 +143,7 @@ tt.clus.j$cluster <- cutree(cluster.jerarquico, k = 3)
 
 cluster.kmeans <- kmeans(data.scale, 3)
 fviz_cluster(object = list(data = data.scale, cluster = cluster.kmeans$cluster), 
-             geom = "point")
+             geom = "point", main = "K-Means", xlab = "", ylab = "", ellipse = TRUE)
 tt.clus.kmeans <- data.def
 tt.clus.kmeans$cluster <- cluster.kmeans$cluster
 
@@ -179,9 +188,32 @@ cluster3.scale <- data.frame(scale(cluster3)) # Se escala el data frame creado
 cluster3.scale <- cluster3.scale[,-11] # se quita la variable cluster
 
 cluster3.kmeans <- kmeans(x = cluster3.scale, centers = 5)
-fviz_cluster(object = list(data = cluster3.scale, cluster = cluster3.kmeans$cluster), 
-             geom = "text", main = "K-Means (cluster 3)", xlab = "", ylab = "", 
-             ellipse = TRUE, labelsize = 8)
 
 tt.cluster3.kmeans <- cluster3[,-11] # Se crea otro data frame quitando la columna 11 (cluster)
 tt.cluster3.kmeans$cluster <- cluster3.kmeans$cluster # Se mete la columna cluster (otra vez) con el nuevo k-means
+
+# Fase 6 Resumen coche - garaje
+
+garajes <- read.csv("Datos/CochesGaraje.csv", sep = ";")
+data.def -> data.resumen
+data.resumen$garaje <- garajes$Garaje # Se incluye el garaje en el dataset original
+
+data.resumen # Este dataset ya incluye todas las variables y el garaje de cada coche
+
+
+resumen_garaje <- data.resumen %>%
+  group_by(garaje) %>%
+  dplyr::summarize(precio = mean(pvp),
+                   cilindros = median(cilindro),
+                   cilindrada = mean(cc),
+                   potencia = mean(potencia),
+                   rpm = mean(rpm),
+                   peso = mean(peso),
+                   plazas = median(plazas),
+                   consumo90 = mean(cons90),
+                   consumourbano = mean(consurb),
+                   velocidad = mean(velocida),
+                   elementos = n())
+
+# En esta tabla se ve cada garaje caracterizado.
+
